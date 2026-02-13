@@ -218,18 +218,11 @@ void ChordComposer::FinishChord(const Chord& chord) {
   string code = SerializeChord(chord);
   output_format_.Apply(&code);
   ClearChord();
-  KeySequence key_sequence;
-  if (key_sequence.Parse(code) && !key_sequence.empty()) {
-    sending_chord_ = true;
-    for (const KeyEvent& key : key_sequence) {
-      if (!engine_->ProcessKey(key)) {
-        // direct commit
-        engine_->CommitText(string(1, key.keycode()));
-        // exclude the character (eg. space) from the raw sequence
-        raw_sequence_.clear();
-      }
-    }
-    sending_chord_ = false;
+  if (!code.empty()) {
+    Context* ctx = engine_->context();
+    ctx->PushInput(code);
+    raw_sequence_.clear();
+    ctx->UpdateComposition();
   }
 }
 
