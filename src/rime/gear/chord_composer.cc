@@ -218,12 +218,20 @@ void ChordComposer::FinishChord(const Chord& chord) {
   string code = SerializeChord(chord);
   output_format_.Apply(&code);
   ClearChord();
+  // ====================== 修改开始 ======================
   if (!code.empty()) {
     Context* ctx = engine_->context();
+    
+    // 将特殊字符追加到当前输入缓冲区（不覆盖已有输入）
     ctx->PushInput(code);
+    
+    // 清空 raw_sequence_ 避免后续冲突
     raw_sequence_.clear();
-    ctx->UpdateComposition();
+    
+    // 注意：不需要调用 UpdateComposition()，因为 PushInput 会自动更新
+    // ctx->UpdateComposition();  // 删除这一行
   }
+  // ====================== 修改结束 ======================
 }
 
 void ChordComposer::ClearChord() {
