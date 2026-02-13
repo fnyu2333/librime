@@ -218,20 +218,19 @@ void ChordComposer::FinishChord(const Chord& chord) {
   string code = SerializeChord(chord);
   output_format_.Apply(&code);
   ClearChord();
-  // ====================== 修改开始 ======================
-  if (!code.empty()) {
-    Context* ctx = engine_->context();
-    
-    // 将特殊字符追加到当前输入缓冲区（不覆盖已有输入）
-    ctx->PushInput(code);
-    
-    // 清空 raw_sequence_ 避免后续冲突
-    raw_sequence_.clear();
-    
-    // 更新 composition 状态，确保字符显示在编码行
-    ctx->UpdateComposition();
+  KeySequence key_sequence;
+  if (key_sequence.Parse(code) && !key_sequence.empty()) {
+    sending_chord_ = true;
+    for (const KeyEvent& key : key_sequence) {
+      if (!engine_->ProcessKey(key)) {
+        // direct commit
+        engine_->CommitText(string(1, key.keycode()));
+        // exclude the character (eg. space) from the raw sequence
+        raw_sequence_.clear();
+      }
+    }
+    sending_chord_ = false;
   }
-  // ====================== 修改结束 ======================
 }
 
 void ChordComposer::ClearChord() {
